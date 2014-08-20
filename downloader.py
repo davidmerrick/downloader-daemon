@@ -1,21 +1,21 @@
 #!/usr/bin/python
+# Written by David Merrick on 8-20-14
 
 import subprocess
+import Pyro.core
 
-class Downloader:
-        'Downloads files using wget'
+class Downloader(Pyro.core.ObjBase):
+        'Daemon for downloading a queue of files'
 
         def __init__(self):
-                self.__download_destination_directory = "/media/usbstick/downloads"
-                self.__list_file = "../tmp/download_us.txt"
+                Pyro.core.ObjBase.__init__(self)
+
+		self.__download_destination_directory = "/media/usbstick/downloads"
                 self.__urls_to_download = []
 
-                #Initialize the download array
-                f = open(self.__list_file)
-                lines = f.readlines()
-                for line in lines:
-                        self.__urls_to_download.append(line.strip())
-                f.close()
+	def add_url(self, url):
+		self.__urls_to_download.append(url)
+		return "Currently downloading: " + str(self.__urls_to_download)
 
         def download_files(self):
                 #Downloads all the files in the list
@@ -40,7 +40,11 @@ class Downloader:
                                 f.write(line)
                         f.close()
 
+Pyro.core.initServer()
+daemon=Pyro.core.Daemon()
+uri=daemon.connect(Downloader(),"downloader")
 
-downloader = Downloader()
-downloader.download_files()
+print "The daemon runs on port:",daemon.port
+print "The object's uri is:",uri
 
+daemon.requestLoop()
