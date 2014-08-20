@@ -3,6 +3,8 @@
 
 import subprocess
 import Pyro.core
+import threading
+import time
 
 class Downloader(Pyro.core.ObjBase):
         'Daemon for downloading a queue of files'
@@ -12,11 +14,29 @@ class Downloader(Pyro.core.ObjBase):
 
 		self.__download_destination_directory = "/media/usbstick/downloads"
                 self.__urls_to_download = []
+	 	self.__current_time = time.strftime("%H")			
+
+		# Spawn threads
+		
+		self.__dl_thread = threading.Thread(target=self.download_files)
+                self.__time_thread = threading.Thread(target=self.__keep_time)
 
 	def add_url(self, url):
 		self.__urls_to_download.append(url)
 		return "Currently downloading: " + str(self.__urls_to_download)
 
+	#def run(self):
+		# Spawn a thread for downloading files and one to monitor the time
+	#	dl_thread = threading.Thread(target=self.download_files)
+	#	time_thread = threading.Thread(target=self.keep_time)	
+
+	def __keep_time(self):
+		time.sleep(10)
+		self.__current_time = time.strftime("%H")
+
+	def get_time(self):
+		return self.__current_time
+	
         def download_files(self):
                 #Downloads all the files in the list
 
@@ -24,21 +44,16 @@ class Downloader(Pyro.core.ObjBase):
                         self.__download_file(url)
 
         def __download_file(self, url):
-                # 1. Spawn a process to download the file
+                # Spawn a process to download the file
 
                 proc = subprocess.Popen('wget ' + url + ' -P ' + self.__download_destination_directory, shell=True, stdout=subprocess.PIPE)
                 output = proc.communicate()[0]
-                #Wait until subprocess has finished.
+                
+		# Wait until subprocess has finished.
                 proc.wait()
 
-                # 2. Clean up the file, leaving only the remaining URLs
-
-                #Remove the URL we just downloaded
+                # Remove the URL we just downloaded
                 self.__urls_to_download = self.__urls_to_download[1:]
-                with open(self.__list_file, "w") as f:
-                        for line in self.__urls_to_download:
-                                f.write(line)
-                        f.close()
 
 Pyro.core.initServer()
 daemon=Pyro.core.Daemon()
