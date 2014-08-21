@@ -6,3 +6,5 @@ import Pyro.core
 downloader = Pyro.core.getProxyForURI("PYROLOC://localhost:7766/downloader")
 
 print "Time: " + downloader.get_time()
+
+downloader.stop()

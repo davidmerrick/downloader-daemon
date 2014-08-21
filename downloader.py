@@ -2,7 +2,7 @@
 # Written by David Merrick on 8-20-14
 
 import subprocess
-import Pyro4
+import Pyro.core
 import threading
 import time
 
@@ -16,11 +16,11 @@ class Downloader(Pyro.core.ObjBase):
                 self.__urls_to_download = []
 	 	self.__current_time = "None"			
 
-		# Spawn threads
+		# Instantiate threads
 		
-		#self.__dl_thread = threading.Thread(target=self.download_files)
-                #self.__time_thread = threading.Thread(target=self.__keep_time)
-
+		self.__dl_thread = None
+                self.__time_thread = None
+	
 	def add_url(self, url):
 		self.__urls_to_download.append(url)
 		return "Currently downloading: " + str(self.__urls_to_download)
@@ -30,18 +30,34 @@ class Downloader(Pyro.core.ObjBase):
 		print("Ready")
 	 	self.__current_time = time.strftime("%H")			
 		
-		#dl_thread = threading.Thread(target=self.download_files)
-		#time_thread = threading.Thread(target=self.keep_time)	
+		# Spawn threads		
+
+		self.__dl_thread = threading.Thread(target=self.__download_files_thread)
+		self.__time_thread = threading.Thread(target=self.__keep_time_thread)	
+
+	def stop(self):
+		# Kill the threads
+		print("Killing threads and stopping")
+		self.__dl_thread.join()
+		self.__time_thread.join()
+
+	def __keep_time_thread(self):
+		while True:
+			time.sleep(300)
+			self.__keep_time()
 
 	def __keep_time(self):
-		time.sleep(10)
 		self.__current_time = time.strftime("%H")
 
 	def get_time(self):
 		return self.__current_time
 	
+	def __download_files_thread(self):
+		while True:
+			self.download_files()
+	
         def download_files(self):
-                #Downloads all the files in the list
+		#Downloads all the files in the list
 
                 for url in self.__urls_to_download:
                         self.__download_file(url)
@@ -56,12 +72,13 @@ class Downloader(Pyro.core.ObjBase):
                 proc.wait()
 
                 # Remove the URL we just downloaded
-                self.__urls_to_download = self.__urls_to_download[1:]
+                self.__urls_to_download.remove(url)
 
 Pyro.core.initServer()
 downloader = Downloader()
-daemon=Pyro4.Daemon()
-uri=daemon.register(downloader)
+downloader.run()
+daemon=Pyro.core.Daemon()
+uri=daemon.connect(downloader, "downloader")
 
 print "The daemon runs on port:",daemon.port
 print "The object's uri is:",uri
