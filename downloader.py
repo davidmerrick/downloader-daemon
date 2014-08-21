@@ -3,7 +3,7 @@
 
 import subprocess
 import Pyro.core
-import threading
+from threading import Thread
 import time
 
 class Downloader(Pyro.core.ObjBase):
@@ -28,23 +28,28 @@ class Downloader(Pyro.core.ObjBase):
 	def run(self):
 		# Spawn a thread for downloading files and one to monitor the time
 		print("Ready")
-	 	self.__current_time = time.strftime("%H")			
 		
 		# Spawn threads		
 
-		self.__dl_thread = threading.Thread(target=self.__download_files_thread)
-		self.__time_thread = threading.Thread(target=self.__keep_time_thread)	
+		self.__dl_thread = Thread(target=self.__download_files_thread)
+		self.__time_thread = Thread(target=self.__keep_time_thread)	
+		self.__dl_thread.start()
+		self.__time_thread.start()
 
 	def stop(self):
 		# Kill the threads
 		print("Killing threads and stopping")
-		self.__dl_thread.join()
-		self.__time_thread.join()
+		
+		if self.__dl_thread:
+			self.__dl_thread.join()
+		
+		if self.__time_thread:
+			self.__time_thread.join()
 
 	def __keep_time_thread(self):
 		while True:
-			time.sleep(300)
 			self.__keep_time()
+			time.sleep(300)
 
 	def __keep_time(self):
 		self.__current_time = time.strftime("%H")
