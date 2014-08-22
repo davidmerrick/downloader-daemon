@@ -2,6 +2,7 @@
 
 import subprocess
 import Pyro.core
+import threading
 
 class Downloader(Pyro.core.ObjBase):
     '''Daemon for downloading a queue of files'''
@@ -9,16 +10,16 @@ class Downloader(Pyro.core.ObjBase):
     def __init__(self):
         Pyro.core.ObjBase.__init__(self)
 
-        self.__download_destination_directory = "/Users/david/Projects/downloader-daemon/downloads/"
+        self.__download_destination_directory = "/home/david/downloader-daemon/downloads/"
         self.__urls_to_download = []
 
     def add_url(self, url):
-        self.__urls_to_download.append(url)
-
-    def run(self):
-        print("Ready")
-        while True:
-            self.download_files()
+        print("Adding URL: " + url)
+	self.__urls_to_download.append(url)
+	return
+		
+    def get_queue(self):
+	return self.__urls_to_download    
 
     def download_files(self):
 
@@ -47,7 +48,7 @@ Pyro.core.initServer()
 downloader = Downloader()
 daemon = Pyro.core.Daemon()
 uri = daemon.connect(downloader, "downloader")
-print("The daemon runs on port: " + daemon.port)
-print("The object's uri is: " + uri)
+print("The daemon runs on port: " + str(daemon.port))
+print("The object's uri is: " + str(uri))
+daemon.requestLoop()
 
-downloader.run()
