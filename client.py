@@ -18,4 +18,4 @@ downloader.add_url(url)
 print("queue: " + str(downloader.get_queue()))
 
 print("Kicking off download")
-downloader.download_files()
+#downloader.download_files()

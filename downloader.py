@@ -12,8 +12,6 @@ class DownloaderDaemon(Daemon):
 	downloader = Downloader()
 	daemon = Pyro.core.Daemon()
 	uri = daemon.connect(downloader, "downloader")
-	print("The daemon runs on port: " + str(daemon.port))
-	print("The object's uri is: " + str(uri))
 	daemon.requestLoop()
 
 class Downloader(Pyro.core.ObjBase):
@@ -22,7 +20,7 @@ class Downloader(Pyro.core.ObjBase):
     def __init__(self):
         Pyro.core.ObjBase.__init__(self)
 
-        self.__download_destination_directory = "/home/david/downloader-daemon/downloads/"
+        self.__download_destination_directory = "/tmp/"
         self.__urls_to_download = []
 
     def add_url(self, url):
@@ -34,6 +32,8 @@ class Downloader(Pyro.core.ObjBase):
 	return self.__urls_to_download    
 
     def download_files(self):
+
+	print("Downloading files...")
 
         #Downloads all the files in the list
 
@@ -66,7 +66,11 @@ if __name__ == "__main__":
                         daemon.stop()
                 elif 'restart' == sys.argv[1]:
                         daemon.restart()
-                else:
+		elif 'start_downloads' == sys.argv[1]:
+			print("Starting downloads")
+			downloader = Pyro.core.getProxyForURI("PYROLOC://localhost:7766/downloader")
+			downloader.download_files
+		else:
                         print "Unknown command"
                         sys.exit(2)
                 sys.exit(0)
