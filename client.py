@@ -11,7 +11,6 @@ def start_downloads(downloader):
 	print("Starting downloads")
 	downloader.start_downloads()
 
-
 if __name__ == "__main__":
 
 	downloader = Pyro.core.getProxyForURI("PYROLOC://localhost:7766/downloader")
@@ -28,4 +27,3 @@ if __name__ == "__main__":
 			start_downloads(downloader)		
 	else:
 		print("Usage: add-url <URL> | start-downloads")
-
